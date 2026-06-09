@@ -4007,31 +4007,95 @@
         }
 
         // ─── SUBMIT POST ────────────────────────────────────────────
-        document.getElementById('submitPostBtn').addEventListener('click', () => {
+        // Server manzili — production da o'zgartiring
+        const SERVER_URL = 'https://polvon.onrender.com';
+
+        document.getElementById('submitPostBtn').addEventListener('click', async () => {
             const title = document.getElementById('postTitle').value.trim();
-            const workers = document.getElementById('postWorkers').value;
+            const desc = document.getElementById('postDesc').value.trim();
+            const workers = document.getElementById('postWorkers').value.trim();
             const salary = document.getElementById('postSalary').value.trim();
             const location = document.getElementById('postLocation').value.trim();
+            const selChip = document.querySelector('#categoryChips .chip.selected');
+            const category = selChip ? selChip.textContent.trim() : '';
+
+            // Telegram foydalanuvchi ma'lumotlari
+            const tgUser = tg && tg.initDataUnsafe && tg.initDataUnsafe.user;
+            const userName = tgUser ? [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ') : '';
+            const userId = tgUser ? String(tgUser.id) : '';
 
             if (!title || !workers || !salary || !location) {
                 hapticNotif('error');
                 showToast("⚠️ Majburiy maydonlarni to'ldiring");
                 return;
             }
-            hapticNotif('success');
-            showToast("E'lon muvaffaqiyatli joylandi! ✓");
 
-            // Reset form
-            setTimeout(() => {
-                document.getElementById('postTitle').value = '';
-                document.getElementById('postDesc').value = '';
-                document.getElementById('postWorkers').value = '';
-                document.getElementById('postSalary').value = '';
-                document.getElementById('postLocation').value = '';
-                uploadedImages = [];
-                renderImagePreviews();
-                goTo('home');
-            }, 1200);
+            // Tugmani bloklash
+            const btn = document.getElementById('submitPostBtn');
+            btn.disabled = true;
+            btn.textContent = "Yuborilmoqda...";
+
+            try {
+                // Server jonliligini tekshirish
+                try {
+                    const ping = await fetch(SERVER_URL + '/health', { method: 'GET' });
+                    if (!ping.ok) throw new Error('Server ' + ping.status);
+                } catch (pingErr) {
+                    throw new Error('Server javob bermadi: ' + (pingErr.message || pingErr));
+                }
+
+                // FormData — rasmlar ham qo'shiladi
+                const fd = new FormData();
+                fd.append('title', title);
+                fd.append('desc', desc);
+                fd.append('workers', workers);
+                fd.append('salary', salary);
+                fd.append('location', location);
+                fd.append('category', category);
+                fd.append('user_name', userName);
+                fd.append('user_id', userId);
+
+                // Yuklab olingan rasmlarni qo'shish
+                if (uploadedImages && uploadedImages.length) {
+                    uploadedImages.forEach((file, i) => {
+                        fd.append('images', file, file.name || ('image_' + i + '.jpg'));
+                    });
+                }
+
+                const resp = await fetch(SERVER_URL + '/api/post-job', {
+                    method: 'POST',
+                    body: fd,
+                });
+
+                const data = await resp.json();
+
+                if (resp.ok && data.ok) {
+                    hapticNotif('success');
+                    showToast("E'lon muvaffaqiyatli joylandi! ✓");
+                    // Formani tozalash
+                    setTimeout(() => {
+                        document.getElementById('postTitle').value = '';
+                        document.getElementById('postDesc').value = '';
+                        document.getElementById('postWorkers').value = '';
+                        document.getElementById('postSalary').value = '';
+                        document.getElementById('postLocation').value = '';
+                        uploadedImages = [];
+                        renderImagePreviews();
+                        goTo('home');
+                    }, 1200);
+                } else {
+                    hapticNotif('error');
+                    showToast("❌ Xato: " + (data.detail || "Server bilan bog'lanishda muammo"));
+                }
+            } catch (err) {
+                hapticNotif('error');
+                const msg = err && err.message ? err.message : String(err);
+                showToast("❌ Xato: " + msg.slice(0, 60));
+                console.error('Post job error:', err);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = "E'lonni joylash ✓";
+            }
         });
 
 
