@@ -3968,7 +3968,8 @@
         const imgUploadArea = document.getElementById('imgUploadArea');
         const imgInput = document.getElementById('imgInput');
         const imgPreviewGrid = document.getElementById('imgPreviewGrid');
-        let uploadedImages = [];
+        let uploadedImages = [];  // base64 preview uchun
+        let uploadedFiles = [];  // FormData uchun haqiqiy File ob'ektlar
 
         imgUploadArea.addEventListener('click', () => {
             haptic('light');
@@ -3979,9 +3980,10 @@
             const files = Array.from(e.target.files);
             files.forEach(file => {
                 if (uploadedImages.length >= 6) return;
+                uploadedFiles.push(file);                  // haqiqiy File saqlash
                 const reader = new FileReader();
                 reader.onload = ev => {
-                    uploadedImages.push(ev.target.result);
+                    uploadedImages.push(ev.target.result);   // preview uchun base64
                     renderImagePreviews();
                 };
                 reader.readAsDataURL(file);
@@ -4003,6 +4005,7 @@
         function removeImg(i) {
             haptic('light');
             uploadedImages.splice(i, 1);
+            uploadedFiles.splice(i, 1);
             renderImagePreviews();
         }
 
@@ -4048,9 +4051,9 @@
                 fd.append('user_name', userName);
                 fd.append('user_id', userId);
 
-                // Yuklab olingan rasmlarni qo'shish
-                if (uploadedImages && uploadedImages.length) {
-                    uploadedImages.forEach((file, i) => {
+                // Rasmlarni qo'shish (haqiqiy File ob'ektlar)
+                if (uploadedFiles && uploadedFiles.length) {
+                    uploadedFiles.forEach((file, i) => {
                         fd.append('images', file, file.name || ('image_' + i + '.jpg'));
                     });
                 }
@@ -4073,6 +4076,7 @@
                         document.getElementById('postSalary').value = '';
                         document.getElementById('postLocation').value = '';
                         uploadedImages = [];
+                        uploadedFiles = [];
                         renderImagePreviews();
                         goTo('home');
                     }, 1200);
