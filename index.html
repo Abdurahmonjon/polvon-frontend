@@ -4011,10 +4011,7 @@
 
         // ─── SUBMIT POST ────────────────────────────────────────────
         // Server manzili — production da o'zgartiring
-        // Avtomatik — Render da ishlasa shu domain, lokal test uchun localhost
-        const SERVER_URL = (location.hostname === 'polvon.onrender.com')
-            ? 'https://polvon.onrender.com'
-            : 'http://localhost:8000';
+        const SERVER_URL = 'https://polvon.onrender.com';
 
         document.getElementById('submitPostBtn').addEventListener('click', async () => {
             const title = document.getElementById('postTitle').value.trim();
