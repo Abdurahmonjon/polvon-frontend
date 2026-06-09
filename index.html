@@ -4008,7 +4008,8 @@
 
         // ─── SUBMIT POST ────────────────────────────────────────────
         // Server manzili — production da o'zgartiring
-        const SERVER_URL = 'https://polvon.onrender.com';
+        // Relative URL — index.html server bilan bir xil domenda
+        const SERVER_URL = '';
 
         document.getElementById('submitPostBtn').addEventListener('click', async () => {
             const title = document.getElementById('postTitle').value.trim();
@@ -4036,14 +4037,6 @@
             btn.textContent = "Yuborilmoqda...";
 
             try {
-                // Server jonliligini tekshirish
-                try {
-                    const ping = await fetch(SERVER_URL + '/health', { method: 'GET' });
-                    if (!ping.ok) throw new Error('Server ' + ping.status);
-                } catch (pingErr) {
-                    throw new Error('Server javob bermadi: ' + (pingErr.message || pingErr));
-                }
-
                 // FormData — rasmlar ham qo'shiladi
                 const fd = new FormData();
                 fd.append('title', title);
